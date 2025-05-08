@@ -1,17 +1,19 @@
 import openai
-from context import *
+import ast
+from config import proxies, openAI_key
 
-def get_gpt_answer(model, role_text, user_id, msg_text, history):
-    messages = [{"role": "system", "content": role_text}] + history + [{"role": "user", "content": msg_text}]
-    response = openai.ChatCompletion.create(
-        model=model,
-        messages=messages,
-    )
-    answer = response.choices[0].message['content']
-    save_message(user_id, "user", msg_text)
-    save_message(user_id, "assistant", answer)
-    return answer
-
+openai.proxy = ast.literal_eval(proxies)
+openai.api_key = openAI_key
+def get_gpt_answer(messages, model):
+    try:
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=messages,
+        )
+        answer = response.choices[0].message['content']
+        return {"answer": answer, "status": True}
+    except Exception as e:
+        return {"answer": f"Ошибка GPT: {e}", "status": False}
 
 
 def get_gpt_answer_inline(text, user_id, model, role_text):

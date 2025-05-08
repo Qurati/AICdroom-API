@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import ast
 from giga import get_giga_answer
+from gpt import get_gpt_answer
 from yandex import *
 from pydantic import BaseModel
 from typing import List, Literal
@@ -19,17 +19,36 @@ class Message(BaseModel):
     role: Literal["system", "user", "assistant"]
     text: str
 
+class MessageGPT(BaseModel):
+    role: Literal["system", "user", "assistant"]
+    content: str
+
 class RequestBody(BaseModel):
     ai: str
     messages: List[Message]
+
+class RequestBodyGPT(BaseModel):
+    ai: str
+    messages: List[MessageGPT]
+    model: str
 
 @app.post("/request")
 async def handle_request(data: RequestBody):
     try:
         ai = data.ai
         messages = [m.dict() for m in data.messages]
+        print(data)
         if ai == 'Yandex':
             return {"answer": get_yandex_answer(messages)}
+    except Exception as e:
+        return {'answer': 'Internal Error'}
+
+@app.post("/requestGPT")
+async def handle_requestGPT(data: RequestBodyGPT):
+    try:
+        model = data.model
+        messages = [m.dict() for m in data.messages]
+        return {"answer": get_gpt_answer(messages, model)}
     except Exception as e:
         return {'answer': 'Internal Error'}
 
