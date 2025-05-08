@@ -1,6 +1,10 @@
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from API.yandex import *
+import ast
+from giga import get_giga_answer
+from yandex import *
+from pydantic import BaseModel
+from typing import List, Literal
 app = FastAPI()
 
 app.add_middleware(
@@ -11,11 +15,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/request={req}&ai={ai}&role={role}&user_id={user_id}")
-def get_token(req: str, ai: str):
+class Message(BaseModel):
+    role: Literal["system", "user", "assistant"]
+    text: str
+
+class RequestBody(BaseModel):
+    ai: str
+    messages: List[Message]
+
+@app.post("/request")
+async def handle_request(data: RequestBody):
     try:
+        ai = data.ai
+        messages = [m.dict() for m in data.messages]
         if ai == 'Yandex':
-            sd
-            return {"answer": get_yandex_answer_inline(req, 'assistant')}
+            return {"answer": get_yandex_answer(messages)}
     except Exception as e:
-        return {'answer': f'Error: {e}'}
+        return {'answer': 'Internal Error'}
+
+@app.get("/requestGiga={msg}")
+async def handle_requestGiga(msg):
+    try:
+        return {"answer": get_giga_answer(msg)}
+    except Exception as e:
+        return {'answer': 'Internal Error'}
