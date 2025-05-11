@@ -1,8 +1,7 @@
 import openai
-import ast
 from config import proxies, openAI_key
 
-openai.proxy = ast.literal_eval(proxies)
+openai.proxy = eval(proxies)
 openai.api_key = openAI_key
 def get_gpt_answer(messages, model):
     try:

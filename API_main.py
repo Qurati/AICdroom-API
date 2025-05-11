@@ -32,6 +32,10 @@ class RequestBodyGPT(BaseModel):
     messages: List[MessageGPT]
     model: str
 
+@app.get("/")
+def home_page():
+    return {"answer": "API home page"}
+
 @app.post("/request")
 async def handle_request(data: RequestBody):
     try:
@@ -58,3 +62,4 @@ async def handle_requestGiga(msg):
         return {"answer": get_giga_answer(msg)}
     except Exception as e:
         return {'answer': 'Internal Error'}
+
