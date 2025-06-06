@@ -1,11 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from giga import get_giga_answer
 from gpt import get_gpt_answer
 from yandex import *
+import uuid
 from pydantic import BaseModel
 from typing import List, Literal
+import auth_db
+
 app = FastAPI()
+auth_db.init_db()
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,3 +67,18 @@ async def handle_requestGiga(msg):
     except Exception as e:
         return {'answer': 'Internal Error'}
 
+@app.get("/get_token")
+def get_token(request: Request):
+    token = str(uuid.uuid4())
+    auth_db.create_token(token)
+    print(f"[GET] {request.url} ➜ token: {token}")
+    return {"token": token}
+
+@app.post("/verify_code")
+def verify_code(request: Request, code: str = Form(...)):
+    print(f"[POST] {request.url} ➜ code: {code}")
+    record = auth_db.get_token_by_code(code)
+    if record and record["verified"]:
+        print(f"[OK] Проверка успешна: {record}")
+        return {"access_token": f"fake-jwt-for-{record['telegram_user_id']}"}
+    raise HTTPException(status_code=401, detail="Invalid code")
